@@ -180,13 +180,15 @@ class _GalleryScreenState extends State<GalleryScreen> {
   Widget _gallery(Map<String, List<GalleryImageFile>> galleryItems) {
     final orientation = MediaQuery.of(context).orientation;
     final int crossAxisCount = orientation == Orientation.portrait ? 3 : 6;
+    final allImages =
+        galleryItems.values.expand((list) => list).toList();
 
     return ListView.builder(
       itemCount: galleryItems.length,
       itemBuilder: (context, index) {
         final date = galleryItems.keys.elementAt(index);
         final List<GalleryImageFile> images = galleryItems[date]!;
-        
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -210,7 +212,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
               ),
               itemCount: images.length,
               itemBuilder: (context, index) {
-                return _image(images[index]);
+                return _image(images[index], allImages);
               },
             ),
           ],
@@ -219,7 +221,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
     );
   }
 
-  Widget _image(GalleryImageFile galleryFile) {
+  Widget _image(GalleryImageFile galleryFile, List<GalleryImageFile> allImages) {
     final index = galleryFile.id;
     final file = galleryFile.file;
     return GestureDetector(
@@ -230,10 +232,15 @@ class _GalleryScreenState extends State<GalleryScreen> {
         if (context.read<SelectionCubit>().state is SelectionActive) {
           context.read<SelectionCubit>().toggleSelection(index);
         } else {
-          ImageProvider ss = FileImage(file);
+          final flatIndex =
+              allImages.indexWhere((img) => img.id == galleryFile.id);
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (context) => CustomImageViewer(imageProvider: ss),
+              builder: (context) => CustomImageViewer(
+                imageProviders:
+                    allImages.map((e) => FileImage(e.file)).toList(),
+                initialIndex: flatIndex >= 0 ? flatIndex : 0,
+              ),
             ),
           );
         }
